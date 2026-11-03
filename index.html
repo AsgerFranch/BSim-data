@@ -993,11 +993,15 @@
         dailyMeanExt[d] = dayCounts[d] > 0 ? daySums[d] / dayCounts[d] : 0;
       }
 
-      const alpha = 0.8;
+      const weights = [1.0, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2];
       const trmByDay = new Array(366).fill(0);
-      trmByDay[1] = dailyMeanExt[1];
-      for (let d = 2; d <= 365; d++) {
-        trmByDay[d] = +((1 - alpha) * dailyMeanExt[d - 1] + alpha * trmByDay[d - 1]).toFixed(2);
+      for (let d = 1; d <= 365; d++) {
+        let sum = 0;
+        for (let k = 0; k < 7; k++) {
+          const prevDay = d - 1 - k >= 1 ? d - 1 - k : 365 + (d - 1 - k);
+          sum += dailyMeanExt[prevDay] * weights[k];
+        }
+        trmByDay[d] = sum / 3.8;
       }
 
       state.dailyTrm = trmByDay;
@@ -1010,13 +1014,13 @@
       const clamped = Math.max(10, Math.min(30, trm));
       const tc = 0.33 * clamped + 18.8;
       return {
-        tc: +tc.toFixed(2),
-        cat1High: +(tc + 2.0).toFixed(2),
-        cat1Low:  +(tc - 3.0).toFixed(2),
-        cat2High: +(tc + 3.0).toFixed(2),
-        cat2Low:  +(tc - 4.0).toFixed(2),
-        cat3High: +(tc + 4.0).toFixed(2),
-        cat3Low:  +(tc - 5.0).toFixed(2)
+        tc,
+        cat1High: tc + 2.0,
+        cat1Low:  tc - 3.0,
+        cat2High: tc + 3.0,
+        cat2Low:  tc - 4.0,
+        cat3High: tc + 4.0,
+        cat3Low:  tc - 5.0
       };
     }
 
