@@ -743,9 +743,10 @@
             </select>
           </div>
           <div class="series-toggles">
-            <label class="checkbox-row"><input type="checkbox" id="showCat1" checked> <span>Kat. I (High/Low +2/-3K)</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="showCat2" checked> <span>Kat. II (High/Low +3/-4K)</span></label>
-            <label class="checkbox-row"><input type="checkbox" id="showCat3" checked> <span>Kat. III (High/Low +4/-5K)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="showOptimum" checked> <span>θc (Termisk optimum)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="showCat1" checked> <span>Kat. I (θc +2/-3K)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="showCat2" checked> <span>Kat. II (θc +3/-4K)</span></label>
+            <label class="checkbox-row"><input type="checkbox" id="showCat3" checked> <span>Kat. III (θc +4/-5K)</span></label>
           </div>
         </div>
       </div>
@@ -940,6 +941,7 @@
       cloudColorBy: "temp",
       pulsePeriod: "summer",
       adaptivePeriod: "active",
+      showOptimum: true,
       showCat1: true,
       showCat2: true,
       showCat3: true,
@@ -1883,7 +1885,7 @@
 
         const px = +mapDayX(r.doy, r.hour).toFixed(1);
         const py = +mapY(temp).toFixed(1);
-        timeDotsSvg += `<circle class="hm-cell" cx="${px}" cy="${py}" r="${rad}" fill="${dotCol}" fill-opacity="${op}" data-d="${r.day}/${r.month}" data-h="${r.hour}" data-ti="${temp}" data-ext="${r.ext}" data-air="${r.air}" data-sun="${r.sun}"/>`;
+        timeDotsSvg += `<circle class="hm-cell" cx="${px}" cy="${py}" r="${rad}" fill="${dotCol}" fill-opacity="${op}" data-d="${r.day}/${r.month}" data-h="${r.hour}" data-ti="${temp}" data-ext="${r.ext}" data-air="${r.air}" data-sun="${r.sun}" data-trm="${r.trm}" data-tc="${lim.tc}"/>`;
       }
 
       let topGrid = "";
@@ -1917,9 +1919,9 @@
       const maxEx = Math.max(20, overCat1 + underCat1, overCat2 + underCat2, overCat3 + underCat3);
 
       const barCats = [
-        { label: "KATEGORI I", sub: "Uden for Tc -3K til +2K", over: overCat1, under: underCat1, col: t.cat2 },
-        { label: "KATEGORI II", sub: "Uden for Tc -4K til +3K", over: overCat2, under: underCat2, col: t.cat3 },
-        { label: "KATEGORI III", sub: "Uden for Tc -5K til +4K", over: overCat3, under: underCat3, col: t.ramp[6] }
+        { label: "KATEGORI I", sub: "Uden for θc -3K til +2K", over: overCat1, under: underCat1, col: t.cat2 },
+        { label: "KATEGORI II", sub: "Uden for θc -4K til +3K", over: overCat2, under: underCat2, col: t.cat3 },
+        { label: "KATEGORI III", sub: "Uden for θc -5K til +4K", over: overCat3, under: underCat3, col: t.ramp[6] }
       ];
 
       let exBarsSvg = "";
@@ -1955,7 +1957,7 @@
 
           <!-- TOP: CHRONOLOGICAL PERIOD PLOT -->
           <g>
-            <text x="${tX}" y="${tY - 10}" fill="${t.text}" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="600">A // TIDSLIGT FORLØB HENOVER PERIODEN — ALLE INDETEMPERATUR-TIMER &amp; KATEGORI I, II, III (HIGH / LOW)</text>
+            <text x="${tX}" y="${tY - 10}" fill="${t.text}" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="600">A // TIDSLIGT FORLØB HENOVER PERIODEN — TERMISK OPTIMUM (θc) &amp; KATEGORI I, II, III (HIGH / LOW)</text>
             <rect x="${tX}" y="${tY}" width="${tW}" height="${tH}" fill="${t.cardBg}" stroke="${t.grid}" stroke-width="1"/>
             ${topGrid}
 
@@ -1983,8 +1985,14 @@
               <text x="${tX + tW + 6}" y="${mapY(lastLim.cat1Low) + 3}" fill="${t.cat1}" font-family="'JetBrains Mono', monospace" font-size="8.5">Kat.I Low</text>
             ` : ''}
 
-            <polyline points="${tcLine.join(" ")}" fill="none" stroke="${t.text}" stroke-width="1" stroke-dasharray="2,3" opacity="0.6"/>
+
             ${timeDotsSvg}
+            ${state.showOptimum ? `
+              <polyline points="${tcLine.join(" ")}" fill="none" stroke="${t.cardBg}" stroke-width="3.6" opacity="0.75" pointer-events="none"/>
+              <polyline points="${tcLine.join(" ")}" fill="none" stroke="${t.text}" stroke-width="2.0" stroke-dasharray="5,3" opacity="0.95" pointer-events="none"/>
+              <text x="${tX + tW + 6}" y="${mapY(lastLim.tc) + 3}" fill="${t.text}" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="700">θc Optimum</text>
+            ` : ''}
+
             <rect x="${tX}" y="${tY}" width="${tW}" height="${tH}" fill="none" stroke="${t.text}" stroke-width="0.8"/>
           </g>
 
@@ -2030,7 +2038,7 @@
               <text x="490" y="109" text-anchor="end" fill="${t.ramp[6]}" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="600">${overCat3 + underCat3} t (${(((overCat3 + underCat3) / tot) * 100).toFixed(1)}%)</text>
 
               <line x1="0" y1="128" x2="490" y2="128" stroke="${t.grid}" stroke-width="1"/>
-              <text x="0" y="150" fill="${t.muted}" font-family="'Inter', sans-serif" font-size="10">DS/EN 16798-1 komfortligning: Tc = 0,33 · Θrm + 18,8 °C (Tilladt afvigelse: ±5 % af brugstiden)</text>
+              <text x="0" y="150" fill="${t.muted}" font-family="'Inter', sans-serif" font-size="10">DS/EN 16798-1:2019 optimal operativ temperatur: θc = 0,33 · θrm + 18,8 °C (Tilladt afvigelse: ±5 % af brugstiden)</text>
             </g>
           </g>
         </svg>
@@ -2393,6 +2401,8 @@
           const ext = el.getAttribute("data-ext");
           const air = el.getAttribute("data-air");
           const sun = el.getAttribute("data-sun");
+          const trm = el.getAttribute("data-trm");
+          const tc = el.getAttribute("data-tc");
 
           tooltip.innerHTML = `
             <div style="color:#E8B88A; font-weight:600; margin-bottom:2px;">DATO: ${d} // KL. ${String(h).padStart(2,'0')}:00</div>
@@ -2400,6 +2410,7 @@
             <div>Udetemp:    <strong>${formatDK(ext, 2)} °C</strong></div>
             <div>Luftskifte: <strong>${formatDK(air, 2)} h⁻¹</strong></div>
             <div>Solindfald: <strong>${formatDK(sun, 3)} kW</strong></div>
+            ${tc !== null ? `<div style="margin-top:3px; padding-top:3px; border-top:1px solid rgba(255,255,255,0.15);">θrm (Ude):  <strong>${formatDK(trm, 2)} °C</strong></div><div>θc Optimum: <strong>${formatDK(tc, 2)} °C</strong></div>` : ''}
           `;
           tooltip.style.opacity = "1";
         });
@@ -2504,6 +2515,7 @@
     document.getElementById("exportSvgBtn").addEventListener("click", exportCurrentSVG);
 
     document.getElementById("adaptivePeriodSelect").addEventListener("change", (e) => { state.adaptivePeriod = e.target.value; updateAll(); });
+    document.getElementById("showOptimum").addEventListener("change", (e) => { state.showOptimum = e.target.checked; updateAll(); });
     document.getElementById("showCat1").addEventListener("change", (e) => { state.showCat1 = e.target.checked; updateAll(); });
     document.getElementById("showCat2").addEventListener("change", (e) => { state.showCat2 = e.target.checked; updateAll(); });
     document.getElementById("showCat3").addEventListener("change", (e) => { state.showCat3 = e.target.checked; updateAll(); });
